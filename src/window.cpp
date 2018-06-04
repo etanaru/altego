@@ -26,13 +26,13 @@
 
 #include "window.h"
 
+#define HELP_STRING "ESC: Quit | Arrow Up/Down: Change Size | Arrow Left/Right: Switch Camera"
+
 #define KEY_ESC 27
 
-#define HELP_TEXT "ESC: Quit | Arrow Up/Down: Change Size | Arrow Left/Right: Switch Camera"
-
-altego::Window::Window(const std::string &title) : _initialImage(600, 800, CV_8UC3, cv::Scalar(255, 0, 72)) {
-  _title = title;
-  _helpSize = cv::getTextSize(HELP_TEXT, cv::FONT_HERSHEY_SIMPLEX, 0.4, 1, nullptr);
+altego::Window::Window(const std::string &title) : _title(title), _help(HELP_STRING), _initialImage(600, 800, CV_8UC3, cv::Scalar(255, 0, 72)) {
+  // calculate help size
+  _helpSize = cv::getTextSize(_help, cv::FONT_HERSHEY_SIMPLEX, 0.4, 1, nullptr);
   // setup window
   cv::namedWindow(_title, cv::WINDOW_AUTOSIZE);
   // render initial image
@@ -41,24 +41,26 @@ altego::Window::Window(const std::string &title) : _initialImage(600, 800, CV_8U
   cv::putText(_initialImage, empty, cv::Point((_initialImage.cols - size.width) / 2, (_initialImage.rows + size.height) / 2), cv::FONT_HERSHEY_SIMPLEX, 2,
               cv::Scalar(255, 255, 255), 2);
   // show initial image
-  ShowInitialImage();
+  ClearImage();
 }
 
-void altego::Window::ShowInitialImage() { Show(_initialImage); }
+altego::Window::~Window() { cv::destroyWindow(_title); }
 
-void altego::Window::Show(cv::Mat &im) {
-  PutTitle(im);
-  PutStatus(im);
-  cv::imshow(_title, im);
+void altego::Window::ClearImage() { SetImage(_initialImage); }
+
+void altego::Window::SetImage(cv::Mat &im) {
+  std::lock_guard<std::mutex> lock(_imMutex);
+  im.copyTo(_im);
+  _touched = true;
 }
 
-void altego::Window::PutTitle(cv::Mat &im) {
+void altego::Window::renderTitle(cv::Mat &im) {
   cv::rectangle(im, cv::Point(0, 0), cv::Point(im.cols, _helpSize.height + 20), cv::Scalar(255, 99, 72), -1);
   cv::putText(im, _title, cv::Point(10, 10 + _helpSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255));
-  cv::putText(im, HELP_TEXT, cv::Point(im.cols - _helpSize.width - 10, 10 + _helpSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255));
+  cv::putText(im, _help, cv::Point(im.cols - _helpSize.width - 10, 10 + _helpSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255));
 }
 
-void altego::Window::PutStatus(cv::Mat &im) {
+void altego::Window::renderStatus(cv::Mat &im) {
   _width = im.cols;
   _height = im.rows;
   cv::rectangle(im, cv::Point(0, im.rows - _helpSize.height - 20), cv::Point(im.cols, im.rows), cv::Scalar(255, 99, 72), -1);
@@ -67,10 +69,25 @@ void altego::Window::PutStatus(cv::Mat &im) {
 }
 
 void altego::Window::Run() {
+  cv::Mat im;
   for (;;) {
+    // re-render if needed
+    if (_touched) {
+      copyImage(im);
+      renderTitle(im);
+      renderStatus(im);
+      cv::imshow(_title, im);
+      _touched = false;
+    }
+    // check key
     auto key = static_cast<char>(cv::waitKey(10));
     if (key == KEY_ESC) {
       break;
     }
   }
+}
+
+void altego::Window::copyImage(cv::Mat &im) {
+  std::lock_guard<std::mutex> lock(_imMutex);
+  _im.copyTo(im);
 }

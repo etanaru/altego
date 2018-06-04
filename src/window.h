@@ -27,6 +27,7 @@
 #ifndef __ALTEGO_WINDOW_H__
 #define __ALTEGO_WINDOW_H__
 
+#include <mutex>
 #include <opencv2/opencv.hpp>
 
 namespace altego {
@@ -38,28 +39,37 @@ namespace altego {
 class Window {
 public:
   explicit Window(const std::string &title);
+  ~Window();
 
-  void ShowInitialImage();
+  void ClearImage();
 
-  void Show(cv::Mat &im);
+  void SetImage(cv::Mat &im);
 
   void Run();
 
 private:
-  // text
-  std::string _title;
+  // title string
+  const std::string _title;
+  // help string
+  const std::string _help;
+  // calculated help string size
   cv::Size _helpSize;
   // initial image
   cv::Mat _initialImage;
-  // status information
-  int _cam = 0;
-  int _width = 0;
-  int _height = 0;
-  int _fps = 0;
+  // current image
+  cv::Mat _im;
+  // lock for current image
+  std::mutex _imMutex;
+  // information
+  int _cam = 0, _width = 0, _height = 0, _fps = 0;
+  // mark for re-render
+  bool _touched = false;
 
-  void PutTitle(cv::Mat &im);
+  void copyImage(cv::Mat &im);
 
-  void PutStatus(cv::Mat &im);
+  void renderTitle(cv::Mat &im);
+
+  void renderStatus(cv::Mat &im);
 };
 } // namespace altego
 
