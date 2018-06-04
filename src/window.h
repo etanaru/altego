@@ -43,10 +43,19 @@ public:
 
   void Show(cv::Mat &im);
 
+  void Run();
+
 private:
+  // text
   std::string _title;
   cv::Size _helpSize;
+  // initial image
   cv::Mat _initialImage;
+  // status information
+  int _cam = 0;
+  int _width = 0;
+  int _height = 0;
+  int _fps = 0;
 
   void PutTitle(cv::Mat &im);
 

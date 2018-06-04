@@ -26,11 +26,13 @@
 
 #include "window.h"
 
-#define _HELP_TEXT "ESC: Quit | Arrow Up/Down: Change Size | Arrow Left/Right: Switch Camera"
+#define KEY_ESC 27
+
+#define HELP_TEXT "ESC: Quit | Arrow Up/Down: Change Size | Arrow Left/Right: Switch Camera"
 
 altego::Window::Window(const std::string &title) : _initialImage(600, 800, CV_8UC3, cv::Scalar(255, 0, 72)) {
   _title = title;
-  _helpSize = cv::getTextSize(_HELP_TEXT, cv::FONT_HERSHEY_SIMPLEX, 0.4, 1, nullptr);
+  _helpSize = cv::getTextSize(HELP_TEXT, cv::FONT_HERSHEY_SIMPLEX, 0.4, 1, nullptr);
   // setup window
   cv::namedWindow(_title, cv::WINDOW_AUTOSIZE);
   // render initial image
@@ -53,9 +55,22 @@ void altego::Window::Show(cv::Mat &im) {
 void altego::Window::PutTitle(cv::Mat &im) {
   cv::rectangle(im, cv::Point(0, 0), cv::Point(im.cols, _helpSize.height + 20), cv::Scalar(255, 99, 72), -1);
   cv::putText(im, _title, cv::Point(10, 10 + _helpSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255));
-  cv::putText(im, _HELP_TEXT, cv::Point(im.cols - _helpSize.width - 10, 10 + _helpSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255));
+  cv::putText(im, HELP_TEXT, cv::Point(im.cols - _helpSize.width - 10, 10 + _helpSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255));
 }
 
 void altego::Window::PutStatus(cv::Mat &im) {
+  _width = im.cols;
+  _height = im.rows;
   cv::rectangle(im, cv::Point(0, im.rows - _helpSize.height - 20), cv::Point(im.cols, im.rows), cv::Scalar(255, 99, 72), -1);
+  std::string s = "CAM: " + std::to_string(_cam) + " | SIZE: " + std::to_string(_width) + "x" + std::to_string(_height) + " | FPS: " + std::to_string(_fps);
+  cv::putText(im, s, cv::Point(10, im.rows - 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255));
+}
+
+void altego::Window::Run() {
+  for (;;) {
+    auto key = static_cast<char>(cv::waitKey(10));
+    if (key == KEY_ESC) {
+      break;
+    }
+  }
 }

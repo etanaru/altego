@@ -32,10 +32,5 @@
 
 int main() {
   altego::Window window("AltEGO");
-  for (;;) {
-    auto key = static_cast<char>(cv::waitKey(10));
-    if (key == KEY_ESC) {
-      break;
-    }
-  }
+  window.Run();
 }
