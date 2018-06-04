@@ -26,7 +26,7 @@
 
 #include "window.h"
 
-#define HELP_STRING "ESC: Quit | Arrow Up/Down: Change Size | Arrow Left/Right: Switch Camera"
+#define HELP_STRING "ESC: Quit | W/S: Change Size | A/D: Switch Camera"
 
 #define KEY_ESC 27
 
@@ -45,6 +45,8 @@ altego::Window::Window(const std::string &title) : _title(title), _help(HELP_STR
 }
 
 altego::Window::~Window() { cv::destroyWindow(_title); }
+
+void altego::Window::SetDelegate(altego::WindowDelegate *delegate) { _delegate = delegate; }
 
 void altego::Window::ClearImage() { SetImage(_initialImage); }
 
@@ -79,10 +81,36 @@ void altego::Window::Run() {
       cv::imshow(_title, im);
       _touched = false;
     }
-    // check key
+    // wait key
     auto key = static_cast<char>(cv::waitKey(10));
+    if (key == 0)
+      continue;
+    // handle key
     if (key == KEY_ESC) {
       break;
+    } else {
+      if (_delegate != nullptr) {
+        switch (key) {
+        case 'w':
+        case 'W':
+          _delegate->AltegoWindowKeyDown(this, KeySizeUp);
+          break;
+        case 's':
+        case 'S':
+          _delegate->AltegoWindowKeyDown(this, KeySizeDown);
+          break;
+        case 'a':
+        case 'A':
+          _delegate->AltegoWindowKeyDown(this, KeyCameraPrev);
+          break;
+        case 'd':
+        case 'D':
+          _delegate->AltegoWindowKeyDown(this, KeyCameraNext);
+          break;
+        default:
+          _delegate->AltegoWindowKeyDown(this, KeyUnknown);
+        }
+      }
     }
   }
 }

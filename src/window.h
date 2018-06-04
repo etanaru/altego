@@ -31,6 +31,20 @@
 #include <opencv2/opencv.hpp>
 
 namespace altego {
+
+typedef enum {
+  KeyUnknown,
+  KeySizeUp,
+  KeySizeDown,
+  KeyCameraPrev,
+  KeyCameraNext,
+} KeyType;
+
+class Window;
+class WindowDelegate {
+public:
+  virtual void AltegoWindowKeyDown(Window *window, KeyType type) = 0;
+};
 /**
  * Window
  *
@@ -40,6 +54,8 @@ class Window {
 public:
   explicit Window(const std::string &title);
   ~Window();
+
+  void SetDelegate(WindowDelegate *delegate);
 
   void ClearImage();
 
@@ -64,6 +80,8 @@ private:
   int _cam = 0, _width = 0, _height = 0, _fps = 0;
   // mark for re-render
   bool _touched = false;
+  // delegate
+  WindowDelegate *_delegate = nullptr;
 
   void copyImage(cv::Mat &im);
 

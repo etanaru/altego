@@ -28,9 +28,32 @@
 
 #include <opencv2/opencv.hpp>
 
-#define KEY_ESC 27
+class DemoWindowDelegate : public altego::WindowDelegate {
+public:
+  void AltegoWindowKeyDown(altego::Window *window, altego::KeyType type) override {
+    (void)window;
+    switch (type) {
+    case altego::KeySizeUp:
+      std::cout << "Size UP" << std::endl;
+      break;
+    case altego::KeySizeDown:
+      std::cout << "Size Down" << std::endl;
+      break;
+    case altego::KeyCameraPrev:
+      std::cout << "Camera Prev" << std::endl;
+      break;
+    case altego::KeyCameraNext:
+      std::cout << "Camera Next" << std::endl;
+      break;
+    default:
+      break;
+    }
+  }
+};
 
 int main() {
+  DemoWindowDelegate demoDelegate;
   altego::Window window("AltEGO");
+  window.SetDelegate(&demoDelegate);
   window.Run();
 }
