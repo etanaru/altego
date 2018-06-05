@@ -13,5 +13,5 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
 
-add_executable(altego src/main.cpp src/window.cpp)
+add_executable(altego src/main.cpp src/window.cpp src/detection.cpp src/capture.cpp)
 target_link_libraries(altego dlib::dlib ${OpenCV_LIBS})

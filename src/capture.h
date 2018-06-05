@@ -1,5 +1,5 @@
 /**
- * window.h
+ * capture.h
  *
  * MIT License
  *
@@ -24,80 +24,43 @@
  * SOFTWARE.
  */
 
-#ifndef __ALTEGO_WINDOW_H__
-#define __ALTEGO_WINDOW_H__
+#ifndef __ALTEGO_CAPTURE_H__
+#define __ALTEGO_CAPTURE_H__
 
-#include <mutex>
 #include <opencv2/core.hpp>
 
 namespace altego {
+class Capture;
 
-typedef enum {
-  KeyUnknown,
-  KeySizeUp,
-  KeySizeDown,
-  KeyCameraPrev,
-  KeyCameraNext,
-} KeyType;
-
-class Window;
-
-class WindowDelegate {
+class CaptureDelegate {
 public:
-  virtual void AltegoWindowKeyDown(Window *window, KeyType type) = 0;
+  virtual void AltegoCaptureDeviceOpened(Capture *capture, int device) = 0;
+
+  virtual void AltegoCaptureFrameRead(Capture *capture, cv::Mat &im) = 0;
+
+  virtual void AltegoCaptureFPSUpdated(Capture *capture, double fps) = 0;
 };
 
-/**
- * Window
- *
- * main window of altego
- */
-class Window {
+class Capture {
 public:
-  explicit Window(const std::string &title);
+  Capture();
 
-  ~Window();
-
-  void SetDelegate(WindowDelegate *delegate);
-
-  void ClearImage();
-
-  void SetImage(cv::Mat &im);
+  void SetDelegate(CaptureDelegate *delegate);
 
   void SetDevice(int device);
 
-  void SetSize(int width, int height);
-
-  void SetFPS(int fps);
+  void SetSize(double width, double height);
 
   void Run();
 
+  void Stop();
+
 private:
-  // title string
-  const std::string _title;
-  // help string
-  const std::string _help;
-  // calculated help string size
-  cv::Size _helpSize;
-  // initial image
-  cv::Mat _initialImage;
-  // current image
-  cv::Mat _im;
-  // lock for current image
-  std::mutex _imMutex;
-  // information
-  int _device = 0, _width = 0, _height = 0, _fps = 0;
-  // mark for re-render
-  bool _touched = false;
-  // delegate
-  WindowDelegate *_delegate = nullptr;
-
-  void copyImage(cv::Mat &im);
-
-  void renderTitle(cv::Mat &im);
-
-  void renderStatus(cv::Mat &im);
+  int _device;
+  double _width, _height;
+  bool _stopMark;
+  CaptureDelegate *_delegate;
 };
 } // namespace altego
 
-#endif // __ALTEGO_WINDOW_H__
+#endif //__ALTEGO_CAPTURE_H__

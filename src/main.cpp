@@ -24,36 +24,66 @@
  * SOFTWARE.
  */
 
+#include "capture.h"
 #include "window.h"
+
+#include <thread>
 
 #include <opencv2/opencv.hpp>
 
-class DemoWindowDelegate : public altego::WindowDelegate {
+class Application : public altego::WindowDelegate, public altego::CaptureDelegate {
 public:
+  Application() : _capture(), _window("AltEGO"), _device(0) {
+    _window.SetDelegate(this);
+    _capture.SetDelegate(this);
+    _capture.SetDevice(_device);
+  }
+
+  void Run() {
+    std::thread captureThread(&altego::Capture::Run, &_capture);
+    _window.Run();
+    _capture.Stop();
+    captureThread.join();
+  }
+
   void AltegoWindowKeyDown(altego::Window *window, altego::KeyType type) override {
     (void)window;
     switch (type) {
     case altego::KeySizeUp:
-      std::cout << "Size UP" << std::endl;
       break;
     case altego::KeySizeDown:
-      std::cout << "Size Down" << std::endl;
       break;
     case altego::KeyCameraPrev:
-      std::cout << "Camera Prev" << std::endl;
+      if (_device > 0) {
+        _device--;
+        _capture.SetDevice(_device);
+      }
       break;
     case altego::KeyCameraNext:
-      std::cout << "Camera Next" << std::endl;
+      _device++;
+      _capture.SetDevice(_device);
       break;
     default:
       break;
     }
   }
+
+  void AltegoCaptureDeviceOpened(altego::Capture *capture, int device) override {
+    _window.SetDevice(device);
+    _window.ClearImage();
+  }
+
+  void AltegoCaptureFrameRead(altego::Capture *capture, cv::Mat &im) override { _window.SetImage(im); }
+
+  void AltegoCaptureFPSUpdated(altego::Capture *capture, double fps) override { _window.SetFPS(static_cast<int>(fps)); }
+
+private:
+  altego::Capture _capture;
+  altego::Window _window;
+  int _device;
 };
 
 int main() {
-  DemoWindowDelegate demoDelegate;
-  altego::Window window("AltEGO");
-  window.SetDelegate(&demoDelegate);
-  window.Run();
+  Application application;
+  application.Run();
 }

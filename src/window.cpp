@@ -26,6 +26,8 @@
 
 #include "window.h"
 
+#include <opencv2/opencv.hpp>
+
 #define HELP_STRING "ESC: Quit | W/S: Change Size | A/D: Switch Camera"
 
 #define KEY_ESC 27
@@ -53,6 +55,8 @@ void altego::Window::ClearImage() { SetImage(_initialImage); }
 void altego::Window::SetImage(cv::Mat &im) {
   std::lock_guard<std::mutex> lock(_imMutex);
   im.copyTo(_im);
+  _width = im.cols;
+  _height = im.rows;
   _touched = true;
 }
 
@@ -66,7 +70,7 @@ void altego::Window::renderStatus(cv::Mat &im) {
   _width = im.cols;
   _height = im.rows;
   cv::rectangle(im, cv::Point(0, im.rows - _helpSize.height - 20), cv::Point(im.cols, im.rows), cv::Scalar(255, 99, 72), -1);
-  std::string s = "CAM: " + std::to_string(_cam) + " | SIZE: " + std::to_string(_width) + "x" + std::to_string(_height) + " | FPS: " + std::to_string(_fps);
+  std::string s = "CAM: " + std::to_string(_device) + " | SIZE: " + std::to_string(_width) + "x" + std::to_string(_height) + " | FPS: " + std::to_string(_fps);
   cv::putText(im, s, cv::Point(10, im.rows - 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255));
 }
 
@@ -118,4 +122,20 @@ void altego::Window::Run() {
 void altego::Window::copyImage(cv::Mat &im) {
   std::lock_guard<std::mutex> lock(_imMutex);
   _im.copyTo(im);
+}
+
+void altego::Window::SetDevice(int device) {
+  _device = device;
+  _touched = true;
+}
+
+void altego::Window::SetSize(int width, int height) {
+  _width = width;
+  _height = height;
+  _touched = true;
+}
+
+void altego::Window::SetFPS(int fps) {
+  _fps = fps;
+  _touched = true;
 }

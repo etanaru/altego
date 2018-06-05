@@ -1,5 +1,5 @@
 /**
- * window.h
+ * detection.h
  *
  * MIT License
  *
@@ -24,80 +24,25 @@
  * SOFTWARE.
  */
 
-#ifndef __ALTEGO_WINDOW_H__
-#define __ALTEGO_WINDOW_H__
+#ifndef __ALTEGO_DETECTION_H__
+#define __ALTEGO_DETECTION_H__
 
-#include <mutex>
+#include <dlib/image_processing/full_object_detection.h>
 #include <opencv2/core.hpp>
 
 namespace altego {
-
-typedef enum {
-  KeyUnknown,
-  KeySizeUp,
-  KeySizeDown,
-  KeyCameraPrev,
-  KeyCameraNext,
-} KeyType;
-
-class Window;
-
-class WindowDelegate {
+class Detection {
 public:
-  virtual void AltegoWindowKeyDown(Window *window, KeyType type) = 0;
-};
+  Detection();
 
-/**
- * Window
- *
- * main window of altego
- */
-class Window {
-public:
-  explicit Window(const std::string &title);
+  Detection(dlib::full_object_detection &fdet);
 
-  ~Window();
-
-  void SetDelegate(WindowDelegate *delegate);
-
-  void ClearImage();
-
-  void SetImage(cv::Mat &im);
-
-  void SetDevice(int device);
-
-  void SetSize(int width, int height);
-
-  void SetFPS(int fps);
-
-  void Run();
+  bool IsValid();
 
 private:
-  // title string
-  const std::string _title;
-  // help string
-  const std::string _help;
-  // calculated help string size
-  cv::Size _helpSize;
-  // initial image
-  cv::Mat _initialImage;
-  // current image
-  cv::Mat _im;
-  // lock for current image
-  std::mutex _imMutex;
-  // information
-  int _device = 0, _width = 0, _height = 0, _fps = 0;
-  // mark for re-render
-  bool _touched = false;
-  // delegate
-  WindowDelegate *_delegate = nullptr;
-
-  void copyImage(cv::Mat &im);
-
-  void renderTitle(cv::Mat &im);
-
-  void renderStatus(cv::Mat &im);
+  std::vector<cv::Point2d> _points;
+  bool _valid;
 };
 } // namespace altego
 
-#endif // __ALTEGO_WINDOW_H__
+#endif // __ALTEGO_DETECTION_H__
