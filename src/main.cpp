@@ -24,50 +24,63 @@
  * SOFTWARE.
  */
 
+#include "algorithm.h"
 #include "capture.h"
+#include "result.h"
+#include "server.h"
 #include "window.h"
 
 #include <thread>
 
-#include <opencv2/opencv.hpp>
+using namespace altego;
 
 static const double CAPTURE_WIDTHS[] = {1280, 800, 640};
 static const double CAPTURE_HEIGHTS[] = {720, 600, 360};
 
-class Application : public altego::WindowDelegate, public altego::CaptureDelegate {
+class Application : public WindowDelegate, public CaptureDelegate {
 public:
   Application() : _capture(), _window("AltEGO"), _device(0), _sizeIdx(0) {
     _window.SetDelegate(this);
     _capture.SetDelegate(this);
     _capture.SetDevice(_device);
     _capture.SetSize(CAPTURE_WIDTHS[0], CAPTURE_HEIGHTS[0]);
+    _server.set_listening_ip("127.0.0.1");
+    _server.set_listening_port(6699);
+    _server.SetResultStore(&_resultStore);
   }
 
   void Run() {
-    std::thread captureThread(&altego::Capture::Run, &_capture);
+    // start capture thread
+    std::thread captureThread(&Capture::Run, &_capture);
+    // start server async
+    _server.start_async();
+    // run the main loop
     _window.Run();
+    // stop capture
     _capture.Stop();
     captureThread.join();
+    // stop server
+    _server.clear();
   }
 
-  void AltegoWindowKeyDown(altego::Window *window, altego::KeyType type) override {
+  void AltegoWindowKeyDown(Window *window, KeyType type) override {
     (void)window;
     switch (type) {
-    case altego::KeySizeUp:
+    case KeySizeUp:
       _sizeIdx++;
       _capture.SetSize(CAPTURE_WIDTHS[_sizeIdx % 3], CAPTURE_HEIGHTS[_sizeIdx % 3]);
       break;
-    case altego::KeySizeDown:
+    case KeySizeDown:
       _sizeIdx--;
       _capture.SetSize(CAPTURE_WIDTHS[_sizeIdx % 3], CAPTURE_HEIGHTS[_sizeIdx % 3]);
       break;
-    case altego::KeyCameraPrev:
+    case KeyCameraPrev:
       if (_device > 0) {
         _device--;
         _capture.SetDevice(_device);
       }
       break;
-    case altego::KeyCameraNext:
+    case KeyCameraNext:
       _device++;
       _capture.SetDevice(_device);
       break;
@@ -76,25 +89,33 @@ public:
     }
   }
 
-  void AltegoCaptureDeviceOpened(altego::Capture *capture, int device) override {
+  void AltegoCaptureDeviceOpened(Capture *capture, int device) override {
     (void)capture;
     _window.SetDevice(device);
     _window.ClearImage();
   }
 
-  void AltegoCaptureFrameRead(altego::Capture *capture, cv::Mat &im) override {
+  void AltegoCaptureFrameRead(Capture *capture, cv::Mat &im) override {
     (void)capture;
+    // resolve and annotate camera frame
+    if (_algorithm.ResolveAndAnnotate(im, _result)) {
+      _resultStore.Set(_result);
+    }
     _window.SetImage(im);
   }
 
-  void AltegoCaptureFPSUpdated(altego::Capture *capture, double fps) override {
+  void AltegoCaptureFPSUpdated(Capture *capture, double fps) override {
     (void)capture;
     _window.SetFPS(static_cast<int>(fps));
   }
 
 private:
-  altego::Capture _capture;
-  altego::Window _window;
+  ResultStore _resultStore;
+  Result _result;
+  Capture _capture;
+  Window _window;
+  Algorithm _algorithm;
+  Server _server;
   int _device;
   int _sizeIdx;
 };

@@ -1,5 +1,5 @@
 /**
- * detection.cpp
+ * algorithm.cpp
  *
  * MIT License
  *
@@ -24,21 +24,13 @@
  * SOFTWARE.
  */
 
-#include "detection.h"
+#include "algorithm.h"
 
-altego::Detection::Detection() : _valid(false) {}
+altego::Algorithm::Algorithm() {}
 
-altego::Detection::Detection(dlib::full_object_detection &fdet) : _valid(false) {
-  if (fdet.num_parts() != 68) {
-    return;
-  }
-  for (size_t i = 0; i < fdet.num_parts(); i++) {
-    auto p = fdet.part(i);
-    if (p == dlib::OBJECT_PART_NOT_PRESENT)
-      return;
-    _points.emplace_back(p.x(), p.y());
-  }
-  _valid = true;
+bool altego::Algorithm::ResolveAndAnnotate(cv::Mat &im, altego::Result &res) {
+  static double id = 0;
+  id += 1;
+  res.base = id;
+  return true;
 }
-
-bool altego::Detection::IsValid() { return _valid; }

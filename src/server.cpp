@@ -1,5 +1,5 @@
 /**
- * detection.h
+ * server.cpp
  *
  * MIT License
  *
@@ -24,25 +24,22 @@
  * SOFTWARE.
  */
 
-#ifndef __ALTEGO_DETECTION_H__
-#define __ALTEGO_DETECTION_H__
+#include "server.h"
 
-#include <dlib/image_processing/full_object_detection.h>
-#include <opencv2/core.hpp>
+altego::Server::Server() : dlib::server_iostream() {}
 
-namespace altego {
-class Detection {
-public:
-  Detection();
+void altego::Server::SetResultStore(altego::ResultStore *resultStore) { _resultStore = resultStore; }
 
-  Detection(dlib::full_object_detection &fdet);
-
-  bool IsValid();
-
-private:
-  std::vector<cv::Point2d> _points;
-  bool _valid;
-};
-} // namespace altego
-
-#endif // __ALTEGO_DETECTION_H__
+void altego::Server::on_connect(std::istream &in, std::ostream &out, const std::string &foreign_ip, const std::string &local_ip, unsigned short foreign_port,
+                                unsigned short local_port, dlib::uint64 connection_id) {
+  (void)in;
+  (void)foreign_ip;
+  (void)local_ip;
+  (void)foreign_port;
+  (void)local_port;
+  std::cout << "server: new connection [" << connection_id << "]" << std::endl;
+  while (_resultStore != nullptr && out.good()) {
+    _resultStore->Next().Serialize(out);
+  }
+  std::cout << "server: connection [" << connection_id << "] closed" << std::endl;
+}
