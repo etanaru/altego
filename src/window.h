@@ -70,6 +70,8 @@ public:
 
   void SetFPS(int fps);
 
+  void ShowErrorAndExit(const std::string &error);
+
   void Run();
 
 private:

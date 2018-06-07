@@ -139,3 +139,15 @@ void altego::Window::SetFPS(int fps) {
   _fps = fps;
   _touched = true;
 }
+
+void altego::Window::ShowErrorAndExit(const std::string &error) {
+  static const std::string hint = "Press ANY key to exit";
+  cv::Size size = cv::getTextSize(error, cv::FONT_HERSHEY_SIMPLEX, 0.6, 1, nullptr);
+  cv::Size size2 = cv::getTextSize(hint, cv::FONT_HERSHEY_SIMPLEX, 0.6, 1, nullptr);
+  cv::Mat im((size.height + size2.height) + 60, MAX(size.width, size2.width) + 20, CV_8UC3, cv::Scalar(255, 0, 72));
+  cv::putText(im, error, cv::Point((im.cols - size.width) / 2, 20 + size.height / 2), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255));
+  cv::putText(im, hint, cv::Point((im.cols - size2.width) / 2, 40 + size.height + size2.height / 2), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255));
+  cv::imshow(_title, im);
+  cv::waitKey(0);
+  exit(EXIT_FAILURE);
+}

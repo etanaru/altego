@@ -29,6 +29,8 @@
 
 #include "result.h"
 
+#include <dlib/image_processing.h>
+#include <dlib/image_processing/frontal_face_detector.h>
 #include <opencv2/core.hpp>
 
 namespace altego {
@@ -36,6 +38,11 @@ class Algorithm {
 public:
   Algorithm();
   bool ResolveAndAnnotate(cv::Mat &im, Result &res);
+  void LoadModelFile(std::string &modelFile);
+
+private:
+  dlib::frontal_face_detector _detector;
+  dlib::shape_predictor _predictor;
 };
 } // namespace altego
 

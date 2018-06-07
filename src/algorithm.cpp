@@ -26,11 +26,49 @@
 
 #include "algorithm.h"
 
-altego::Algorithm::Algorithm() {}
+#include <dlib/opencv.h>
+#include <opencv2/imgproc.hpp>
+
+// down sample ratio
+#define DSRATIO 4
+
+bool _compareRectangleArea(dlib::rectangle lhs, dlib::rectangle rhs) { return lhs.area() < rhs.area(); }
+
+altego::Algorithm::Algorithm() { _detector = dlib::get_frontal_face_detector(); }
 
 bool altego::Algorithm::ResolveAndAnnotate(cv::Mat &im, altego::Result &res) {
-  static double id = 0;
-  id += 1;
-  res.base = id;
+  // down sample for face detection
+  cv::Mat imSmall;
+  cv::resize(im, imSmall, cv::Size(), 1.0 / DSRATIO, 1.0 / DSRATIO);
+  // convert type with zero copy
+  dlib::cv_image<dlib::bgr_pixel> dim(im);
+  dlib::cv_image<dlib::bgr_pixel> dimSmall(imSmall);
+  // detect faces
+  auto faces = _detector(dimSmall);
+  if (faces.empty())
+    return false;
+  // find largest face
+  auto face = *std::max_element(faces.begin(), faces.end(), _compareRectangleArea).base();
+  // upscale
+  face.left() *= DSRATIO;
+  face.top() *= DSRATIO;
+  face.right() *= DSRATIO;
+  face.bottom() *= DSRATIO;
+  // detection
+  auto det = _predictor(dim, face);
+  // check num_parts()
+  if (det.num_parts() != 68)
+    return false;
+  // draw detection
+  for (size_t i = 0; i < det.num_parts(); i++) {
+    dlib::point p = det.part(i);
+    // check part valid
+    if (p == dlib::OBJECT_PART_NOT_PRESENT)
+      return false;
+    cv::circle(im, cv::Point(static_cast<int>(p.x()), static_cast<int>(p.y())), 2, cv::Scalar(255, 0, 72), -1);
+  }
+  // parse full object detection
   return true;
 }
+
+void altego::Algorithm::LoadModelFile(std::string &modelFile) { dlib::deserialize(modelFile) >> _predictor; }

@@ -30,7 +30,10 @@
 #include "server.h"
 #include "window.h"
 
+#include <fstream>
+#include <pwd.h>
 #include <thread>
+#include <unistd.h>
 
 using namespace altego;
 
@@ -50,6 +53,21 @@ public:
   }
 
   void Run() {
+    // determine model file
+    const char *home = nullptr;
+    if ((home = getenv("HOME")) == nullptr) {
+      home = getpwuid(getuid())->pw_dir;
+    }
+    if (home == nullptr) {
+      _window.ShowErrorAndExit("Failed to determine $HOME directory");
+    }
+    std::string modelFile = std::string(home) + "/.altego/shape_predictor_68_face_landmarks.dat";
+    // load model file
+    try {
+      _algorithm.LoadModelFile(modelFile);
+    } catch (std::exception &err) {
+      _window.ShowErrorAndExit("Failed to load model: " + std::string(err.what()));
+    }
     // start capture thread
     std::thread captureThread(&Capture::Run, &_capture);
     // start server async
