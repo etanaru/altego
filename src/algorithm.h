@@ -43,6 +43,9 @@ public:
 private:
   dlib::frontal_face_detector _detector;
   dlib::shape_predictor _predictor;
+  std::vector<cv::Point3d> _referencePoints;
+  std::vector<cv::Point2d> _lastCameraPoints;
+  cv::Mat _distCoeffs;
 };
 } // namespace altego
 

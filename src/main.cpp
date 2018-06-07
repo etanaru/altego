@@ -78,7 +78,8 @@ public:
     _capture.Stop();
     captureThread.join();
     // stop server
-    _server.clear();
+    //_server.clear();
+    exit(EXIT_SUCCESS);
   }
 
   void AltegoWindowKeyDown(Window *window, KeyType type) override {

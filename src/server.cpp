@@ -26,7 +26,7 @@
 
 #include "server.h"
 
-altego::Server::Server() : dlib::server_iostream() {}
+altego::Server::Server() : dlib::server_iostream() { set_graceful_close_timeout(1000); }
 
 void altego::Server::SetResultStore(altego::ResultStore *resultStore) { _resultStore = resultStore; }
 

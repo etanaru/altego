@@ -37,32 +37,15 @@
 namespace altego {
 class Result {
 public:
-  // camera size
-  double w = 0;
-  double h = 0;
-  // translation vector
-  double t0 = 0;
-  double t1 = 0;
-  double t2 = 0;
   // rotation vector
-  double r0 = 0;
   double r1 = 0;
   double r2 = 0;
-  // eye open size
-  double le = 0;
-  double re = 0;
-  // eyebrow height
-  double lb = 0;
-  double rb = 0;
-  // mouth width/height
-  double mw = 0;
-  double mh = 0;
-
-  // nose length as base
-  double base = 0;
 
   // serialize result to stream
   void Serialize(std::ostream &out);
+
+  // difference against another result
+  double Diff(Result &rhs);
 };
 
 // ResultStore with wait and broadcast
